@@ -11,6 +11,12 @@ category:            Codec
 build-type:          Simple
 cabal-version:       >=1.8
 
+
+flag cuda
+  description: compile and support the CUDA backend
+  default: False
+
+
 library
   exposed-modules:
                 Data.Array.Accelerate.Cmp
@@ -18,5 +24,9 @@ library
   build-depends:
                 base == 4.6.*,
                 accelerate     == 0.14.*
+
+  if flag(cuda)
+    cpp-options: -DCUDA
+    build-depends: accelerate-cuda == 0.14.*
 
   hs-source-dirs: src
