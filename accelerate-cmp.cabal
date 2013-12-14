@@ -1,5 +1,5 @@
 name:                accelerate-cmp
-version:             0.14
+version:             0.14.0.0
 synopsis:            Framework for testing accelerate
 description:         Support for running multiple accelerate back ends at the same time.
 license:             BSD3
