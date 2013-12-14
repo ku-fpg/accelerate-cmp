@@ -4,12 +4,12 @@ module Data.Array.Accelerate.Cmp where
 import Data.Array.Accelerate hiding (zip,(++),tail)
 import qualified Data.Array.Accelerate.Interpreter as I
 
-#ifdef CUDA
+#ifdef USE_CUDA
 import qualified Data.Array.Accelerate.CUDA as CUDA
 #endif
 
 runs :: Arrays a => [Acc a -> a]
-#ifdef CUDA
+#ifdef USE_CUDA
 runs = [I.run,CUDA.run]
 #else
 runs = [I.run,I.run]

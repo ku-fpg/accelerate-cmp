@@ -26,7 +26,7 @@ library
                 accelerate     == 0.14.*
 
   if flag(cuda)
-    cpp-options: -DCUDA
+    cpp-options: -DUSE_CUDA
     build-depends: accelerate-cuda == 0.14.*
 
   hs-source-dirs: src
