@@ -40,10 +40,11 @@ instance (Eq a, Show a) => ArrCmp (Array sh a) where
 
 run1 :: (ArrCmp b, Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b
 
+run1
 #ifdef USE_CUDA
-run1 | cmd == "CUDA" = CUDA.run1                -- only use run1 for CUDA
+     | cmd == "CUDA" = CUDA.run1                -- only use run1 for CUDA
 #endif
-run1 | otherwise     = \ f -> run . f . use
+     | otherwise     = \ f -> run . f . use
 
 run :: (ArrCmp a, Arrays a) => Acc a -> a
 run acc = report rss
