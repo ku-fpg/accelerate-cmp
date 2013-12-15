@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 module Data.Array.Accelerate.Cmp (run, run1) where
 
-import Data.Array.Accelerate hiding (zip,(++),tail,snd)
+import Data.Array.Accelerate hiding (zip,(++),tail,fst,snd,map,null)
 import qualified Data.Array.Accelerate.Interpreter as I
 
 import System.IO.Unsafe
@@ -48,10 +48,12 @@ run1 | otherwise     = \ f -> run . f . use
 run :: (ArrCmp a, Arrays a) => Acc a -> a
 run acc = report rss
   where
-        ress = [ (ty,f acc) | (ty,f) <- runs, cmd == "CMP" || cmd == ty ]
+        r = runs        -- to share the type with error message
+        ress = [ (ty,f acc) | (ty,f) <- r, cmd == "CMP" || cmd == ty ]
         rss = ress `zip` tail ress
 
-        report [] = snd $ head ress
+        report [] | null ress = error $ "can not find run for " ++ cmd ++ ", looked at " ++ show (map fst r)
+                  | otherwise = snd $ head ress
         report (((xn,x),(yn,y)):xs)
                 | x `arrEq` y = report xs
                 | otherwise = error $ unlines
