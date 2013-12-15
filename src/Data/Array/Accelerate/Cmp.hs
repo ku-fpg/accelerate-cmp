@@ -1,19 +1,36 @@
 {-# LANGUAGE CPP #-}
-module Data.Array.Accelerate.Cmp where
+module Data.Array.Accelerate.Cmp (run, run1) where
 
-import Data.Array.Accelerate hiding (zip,(++),tail)
+import Data.Array.Accelerate hiding (zip,(++),tail,snd)
 import qualified Data.Array.Accelerate.Interpreter as I
+
+import System.IO.Unsafe
+import System.Environment
 
 #ifdef CUDA
 import qualified Data.Array.Accelerate.CUDA as CUDA
 #endif
 
-runs :: Arrays a => [Acc a -> a]
+
+
+runs :: Arrays a => [(String,Acc a -> a)]
 #ifdef CUDA
-runs = [I.run,CUDA.run]
+runs = [("CUDA",CUDA.run),("INTERP",I.run)]
 #else
-runs = [I.run,I.run]
+runs = [("INTERP",I.run)]
 #endif
+
+cmd :: String
+cmd = unsafePerformIO $ do
+        env <- getEnvironment
+        case lookup "ACCEL_BACKEND" env of
+          Nothing -> return "CMP"      -- default to cmp
+          Just s | s `elem` cmds
+                 -> return s           -- CUDA | INTERP | CMP
+          Just s -> error $ "accelerate-cmp failed (" ++ show s ++ ")  expecting : " ++ show cmds
+
+cmds :: [String]
+cmds = ["CUDA","INTERP","CMP"]
 
 class ArrCmp a where
   arrEq :: a -> a -> Bool
@@ -23,17 +40,26 @@ instance (Eq a, Show a) => ArrCmp (Array sh a) where
   arrEq a b = toList a == toList b
   arrShow = show . toList
 
+run1 :: (ArrCmp b, Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b
+
+#ifdef CUDA
+run1 | cmd == "CUDA" = CUDA.run1                -- only use run1 for CUDA
+#endif
+run1 | otherwise     = \ f -> run . f . use
+
 run :: (ArrCmp a, Arrays a) => Acc a -> a
 run acc = report rss
   where
-        ress = [ f acc | f <- runs ]
+        ress = [ (ty,f acc) | (ty,f) <- runs, cmd == "CMP" || cmd == ty ]
         rss = ress `zip` tail ress
 
-        report [] = head ress
-        report ((x,y):xs)
+        report [] = snd $ head ress
+        report (((xn,x),(yn,y)):xs)
                 | x `arrEq` y = report xs
                 | otherwise = error $ unlines
                                 [ "found different results in run"
+                                , xn ++ ":"
                                 , arrShow x
+                                , yn ++ ":"
                                 , arrShow y
                                 ]
