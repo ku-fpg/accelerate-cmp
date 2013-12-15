@@ -7,14 +7,12 @@ import qualified Data.Array.Accelerate.Interpreter as I
 import System.IO.Unsafe
 import System.Environment
 
-#ifdef CUDA
+#ifdef USE_CUDA
 import qualified Data.Array.Accelerate.CUDA as CUDA
 #endif
 
-
-
 runs :: Arrays a => [(String,Acc a -> a)]
-#ifdef CUDA
+#ifdef USE_CUDA
 runs = [("CUDA",CUDA.run),("INTERP",I.run)]
 #else
 runs = [("INTERP",I.run)]
@@ -42,7 +40,7 @@ instance (Eq a, Show a) => ArrCmp (Array sh a) where
 
 run1 :: (ArrCmp b, Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b
 
-#ifdef CUDA
+#ifdef USE_CUDA
 run1 | cmd == "CUDA" = CUDA.run1                -- only use run1 for CUDA
 #endif
 run1 | otherwise     = \ f -> run . f . use
